@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reservaciones · PRINTWARE S.A.C</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Lato:wght@300;400;700&display=swap');
+:root {
+  --bg:#0f1117;--surface:#181c27;--surface2:#1f2436;--border:#2a3050;
+  --gold:#f0b429;--gold2:#ffd97d;--blue:#3d8ef0;--blue-soft:rgba(61,142,240,0.12);
+  --red:#e05252;--green:#3ecf8e;--text:#e8eaf6;--muted:#6b7599;--radius:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}html,body{height:100%}
+body{font-family:'Lato',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+
+/* LOGIN */
+#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 30% 20%,#1a2040 0%,var(--bg) 70%);padding:24px}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:48px 44px;max-width:420px;width:100%;box-shadow:0 30px 80px rgba(0,0,0,0.5);text-align:center}
+.login-icon{width:64px;height:64px;background:linear-gradient(135deg,var(--gold),#e8830a);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin:0 auto 24px}
+.login-card h1{font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800;margin-bottom:6px}
+.login-card p{color:var(--muted);font-size:0.85rem;margin-bottom:32px;line-height:1.6}
+.login-card .company{font-size:0.72rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--gold);font-weight:700;margin-bottom:8px}
+.btn-login{width:100%;padding:14px;background:linear-gradient(135deg,#0078d4,#005a9e);border:none;border-radius:10px;color:white;font-family:'Syne',sans-serif;font-size:0.95rem;font-weight:700;cursor:pointer;letter-spacing:0.03em;display:flex;align-items:center;justify-content:center;gap:12px;transition:opacity 0.2s,transform 0.15s}
+.btn-login:hover{opacity:0.9;transform:translateY(-1px)}
+.btn-login:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+.login-error{margin-top:16px;background:rgba(224,82,82,0.1);border:1px solid rgba(224,82,82,0.3);border-radius:8px;padding:12px;font-size:0.8rem;color:var(--red);display:none;text-align:left;line-height:1.5}
+.login-footer{margin-top:20px;font-size:0.72rem;color:var(--muted)}
+
+/* STATUS */
+#status-bar{display:none;position:fixed;top:0;left:0;right:0;z-index:500;padding:10px 24px;font-size:0.78rem;font-weight:700;letter-spacing:0.04em;align-items:center;gap:10px}
+#status-bar.connecting{display:flex;background:rgba(61,142,240,0.15);border-bottom:1px solid var(--blue);color:var(--blue)}
+#status-bar.success{display:flex;background:rgba(62,207,142,0.1);border-bottom:1px solid var(--green);color:var(--green)}
+#status-bar.error{display:flex;background:rgba(224,82,82,0.1);border-bottom:1px solid var(--red);color:var(--red)}
+.spinner{width:14px;height:14px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* APP */
+#app{display:none;flex-direction:column;min-height:100vh}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;height:62px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.header-left{display:flex;align-items:center;gap:14px}
+.app-logo{width:36px;height:36px;background:linear-gradient(135deg,var(--gold),#e8830a);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem}
+header h1{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;letter-spacing:0.03em}
+.header-sub{font-size:0.7rem;color:var(--muted);margin-top:1px}
+.sync-badge{display:flex;align-items:center;gap:6px;background:rgba(62,207,142,0.1);border:1px solid rgba(62,207,142,0.3);border-radius:20px;padding:3px 10px;font-size:0.7rem;color:var(--green);font-weight:700;letter-spacing:0.04em}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+.sync-badge.syncing{color:var(--gold);border-color:rgba(240,180,41,0.3);background:rgba(240,180,41,0.08)}
+.sync-badge.syncing .sync-dot{background:var(--gold)}
+.sync-badge.err{color:var(--red);border-color:rgba(224,82,82,0.3);background:rgba(224,82,82,0.08)}
+.sync-badge.err .sync-dot{background:var(--red)}
+.header-actions{display:flex;gap:10px;align-items:center}
+.btn{padding:8px 16px;border-radius:7px;font-family:'Lato',sans-serif;font-size:0.8rem;font-weight:700;cursor:pointer;border:none;transition:all 0.15s;letter-spacing:0.03em}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted)}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+.btn-gold{background:linear-gradient(135deg,var(--gold),#e8830a);color:#000;font-weight:700}
+.btn-gold:hover{opacity:0.88}
+.btn-red{background:rgba(224,82,82,0.1);border:1px solid rgba(224,82,82,0.3);color:var(--red)}
+.btn-red:hover{background:var(--red);color:white}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:290px 1fr;flex:1;min-height:0}
+.sidebar{background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;height:calc(100vh - 62px);position:sticky;top:62px;padding:18px 14px}
+.sb-section{margin-bottom:22px}
+.sb-title{font-family:'Syne',sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:10px;padding:0 4px}
+.mini-cal{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px}
+.cal-nav-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.cal-month-title{font-family:'Syne',sans-serif;font-size:0.82rem;font-weight:700;text-transform:capitalize}
+.cal-btn{background:none;border:none;color:var(--muted);cursor:pointer;padding:3px 7px;border-radius:5px;font-size:0.9rem;transition:all 0.15s}
+.cal-btn:hover{background:var(--border);color:var(--gold)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
+.cal-dn{font-size:0.58rem;font-weight:700;color:var(--muted);padding:3px 0;text-transform:uppercase}
+.cal-d{font-size:0.74rem;padding:5px 0;border-radius:6px;cursor:pointer;transition:all 0.12s;position:relative;color:var(--text)}
+.cal-d:hover{background:var(--border)}
+.cal-d.today{background:var(--gold);color:#000;font-weight:700}
+.cal-d.selected{background:var(--blue);color:white;font-weight:700}
+.cal-d.has-rva::after{content:'';position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:3px;height:3px;border-radius:50%;background:var(--gold)}
+.cal-d.today.has-rva::after,.cal-d.selected.has-rva::after{background:rgba(255,255,255,0.7)}
+.cal-d.empty{cursor:default}
+.day-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:7px;cursor:pointer;transition:border-color 0.15s}
+.day-card:hover{border-color:var(--blue)}
+.day-card .dc-name{font-weight:700;font-size:0.82rem}
+.day-card .dc-meta{font-size:0.72rem;color:var(--muted);margin-top:3px}
+.day-card .dc-price{color:var(--green);font-weight:700;font-size:0.78rem;margin-top:2px}
+
+/* CONTENT */
+.content{padding:22px 26px;overflow-y:auto}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;position:relative;overflow:hidden}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.stat.s-gold::before{background:var(--gold)}.stat.s-blue::before{background:var(--blue)}.stat.s-green::before{background:var(--green)}
+.stat-label{font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);font-weight:700;margin-bottom:7px}
+.stat-value{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:700;line-height:1}
+.stat.s-gold .stat-value{color:var(--gold)}.stat.s-blue .stat-value{color:var(--blue)}.stat.s-green .stat-value{color:var(--green)}
+.table-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.table-toolbar{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.search{flex:1;min-width:160px;padding:8px 12px;background:var(--bg);border:1.5px solid var(--border);border-radius:7px;color:var(--text);font-family:'Lato',sans-serif;font-size:0.84rem}
+.search:focus{outline:none;border-color:var(--blue)}
+.filter-pills{display:flex;gap:6px;flex-wrap:wrap}
+.pill{padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:0.72rem;font-weight:700;cursor:pointer;font-family:'Lato',sans-serif;transition:all 0.15s;letter-spacing:0.03em}
+.pill.active{background:var(--blue);border-color:var(--blue);color:white}
+.pill:hover:not(.active){border-color:var(--blue);color:var(--blue)}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:0.79rem}
+thead tr{background:var(--surface2)}
+thead th{padding:9px 11px;text-align:left;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.07em;color:var(--muted);font-weight:700;white-space:nowrap;border-bottom:1px solid var(--border)}
+tbody tr{border-bottom:1px solid rgba(42,48,80,0.6);transition:background 0.1s}
+tbody tr:hover{background:rgba(61,142,240,0.05)}
+tbody td{padding:8px 11px;color:#c5c9e0;white-space:nowrap;max-width:130px;overflow:hidden;text-overflow:ellipsis}
+.cod-tag{background:rgba(240,180,41,0.12);color:var(--gold);padding:2px 7px;border-radius:4px;font-family:monospace;font-size:0.76rem;font-weight:700;border:1px solid rgba(240,180,41,0.2)}
+.price-tag{color:var(--green);font-weight:700;font-family:'Syne',sans-serif}
+.act-btns{display:flex;gap:5px}
+.btn-sm{padding:4px 9px;border-radius:5px;font-size:0.7rem;font-weight:700;cursor:pointer;border:none;font-family:'Lato',sans-serif;transition:all 0.15s}
+.btn-edit-sm{background:var(--blue-soft);color:var(--blue);border:1px solid rgba(61,142,240,0.3)}
+.btn-edit-sm:hover{background:var(--blue);color:white}
+.btn-del-sm{background:rgba(224,82,82,0.1);color:var(--red);border:1px solid rgba(224,82,82,0.2)}
+.btn-del-sm:hover{background:var(--red);color:white}
+.empty-tbl{text-align:center;padding:60px 20px;color:var(--muted);display:none}
+.empty-tbl .e-icon{font-size:2.5rem;margin-bottom:10px}
+.empty-tbl p{font-size:0.85rem;line-height:1.7}
+
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:300;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+.overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 30px 80px rgba(0,0,0,0.6);animation:fadeUp 0.22s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.modal-hdr{padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);z-index:1}
+.modal-hdr h3{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700}
+.modal-x{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.2rem;padding:2px 6px;border-radius:4px}
+.modal-x:hover{background:var(--border);color:var(--red)}
+.modal-body{padding:16px 22px}
+.modal-ftr{padding:12px 22px 18px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end}
+.fsec{margin-bottom:16px}
+.fsec-title{font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--gold);font-weight:700;margin-bottom:9px}
+.fg{margin-bottom:9px}
+.fg label{display:block;font-size:0.73rem;color:var(--muted);margin-bottom:4px;font-weight:700}
+.fg input,.fg select,.fg textarea{width:100%;padding:8px 11px;background:var(--bg);border:1.5px solid var(--border);border-radius:7px;color:var(--text);font-family:'Lato',sans-serif;font-size:0.83rem;transition:border-color 0.15s}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(240,180,41,0.08)}
+.fg select option{background:var(--surface2)}
+.fg textarea{resize:vertical;min-height:55px}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.btn-cancel{background:var(--surface2);border:1px solid var(--border);color:var(--muted);padding:9px 18px}
+.btn-cancel:hover{border-color:var(--red);color:var(--red)}
+.btn-save{background:linear-gradient(135deg,var(--gold),#e8830a);color:#000;font-weight:700;padding:9px 22px}
+.btn-save:hover{opacity:0.88}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--gold);color:var(--text);padding:12px 18px;border-radius:8px;font-size:0.83rem;z-index:999;transform:translateY(80px);opacity:0;transition:all 0.28s cubic-bezier(0.34,1.56,0.64,1);max-width:340px;box-shadow:0 8px 30px rgba(0,0,0,0.4)}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.err{border-left-color:var(--red)}
+.toast.ok{border-left-color:var(--green)}
+
+@media(max-width:860px){.layout{grid-template-columns:1fr}.sidebar{position:static;height:auto}.stats-row{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-icon">🏨</div>
+    <div class="company">PRINTWARE S.A.C</div>
+    <h1>Sistema de Reservaciones</h1>
+    <p>Inicia sesión con tu cuenta de Microsoft para gestionar las reservaciones directamente en Excel.</p>
+    <button class="btn-login" id="btn-login" onclick="iniciarLogin()">
+      <svg viewBox="0 0 21 21" fill="none" width="20" height="20">
+        <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
+        <rect x="11" y="1" width="9" height="9" fill="#7fba00"/>
+        <rect x="1" y="11" width="9" height="9" fill="#00a4ef"/>
+        <rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
+      </svg>
+      Iniciar sesión con Microsoft
+    </button>
+    <div class="login-error" id="login-error"></div>
+    <div class="login-footer">Solo usuarios de PRINTWARE S.A.C · Conexión segura con Microsoft 365</div>
+  </div>
+</div>
+
+<div id="status-bar">
+  <div class="spinner" id="sb-spinner"></div>
+  <span id="sb-text"></span>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header>
+    <div class="header-left">
+      <div class="app-logo">🏨</div>
+      <div>
+        <h1>Reservaciones · ESTADISTICAS EP</h1>
+        <div class="header-sub" id="user-name">—</div>
+      </div>
+      <div class="sync-badge" id="sync-badge">
+        <div class="sync-dot"></div>
+        <span id="sync-label">Conectado a OneDrive</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-ghost" onclick="cargarDatos()">↻ Sincronizar</button>
+      <button class="btn btn-gold" onclick="abrirModal()">+ Nueva Reserva</button>
+      <button class="btn btn-red" onclick="cerrarSesion()">⎋ Salir</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <div class="sidebar">
+      <div class="sb-section">
+        <div class="sb-title">Calendario</div>
+        <div class="mini-cal">
+          <div class="cal-nav-row">
+            <button class="cal-btn" onclick="cambiarMes(-1)">‹</button>
+            <span class="cal-month-title" id="cal-title"></span>
+            <button class="cal-btn" onclick="cambiarMes(1)">›</button>
+          </div>
+          <div class="cal-grid" id="cal-grid"></div>
+        </div>
+      </div>
+      <div class="sb-section" id="dia-section" style="display:none">
+        <div class="sb-title" id="dia-title">Reservas del día</div>
+        <div id="dia-list"></div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="stats-row">
+        <div class="stat s-gold"><div class="stat-label">Total Reservas</div><div class="stat-value" id="st-total">0</div></div>
+        <div class="stat s-green"><div class="stat-label">Ingresos Totales</div><div class="stat-value" id="st-ingresos" style="font-size:1.1rem">S/ 0</div></div>
+        <div class="stat s-blue"><div class="stat-label">Este Mes</div><div class="stat-value" id="st-mes">0</div></div>
+        <div class="stat"><div class="stat-label">Hoy</div><div class="stat-value" id="st-hoy">0</div></div>
+      </div>
+      <div class="table-card">
+        <div class="table-toolbar">
+          <input class="search" placeholder="🔍 Buscar cliente, código, cuarto..." oninput="buscar(this.value)">
+          <div class="filter-pills">
+            <button class="pill active" onclick="filtrar('todo',this)">Todas</button>
+            <button class="pill" onclick="filtrar('hoy',this)">Hoy</button>
+            <button class="pill" onclick="filtrar('semana',this)">Semana</button>
+            <button class="pill" onclick="filtrar('mes',this)">Este mes</button>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr>
+              <th>Cód. Rva</th><th>Día</th><th>F. Reserva</th><th>F. Pago</th>
+              <th>Hora</th><th>Cliente</th><th>Cuarto</th><th>Medio Pago</th>
+              <th>Precio</th><th>Origen</th><th></th>
+            </tr></thead>
+            <tbody id="tbl-body"></tbody>
+          </table>
+        </div>
+        <div class="empty-tbl" id="empty-tbl">
+          <div class="e-icon">🛎️</div>
+          <p>Sin reservaciones.<br>Haz clic en <strong>+ Nueva Reserva</strong> para comenzar.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-hdr">
+      <h3 id="modal-title">Nueva Reservación</h3>
+      <button class="modal-x" onclick="cerrarModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-idx" value="-1">
+      <input type="hidden" id="edit-row" value="-1">
+      <div class="fsec">
+        <div class="fsec-title">Identificación</div>
+        <div class="frow">
+          <div class="fg"><label>Cód. Reserva *</label><input type="text" id="f-cod" placeholder="RVA-001"></div>
+          <div class="fg"><label>Origen</label>
+            <select id="f-origen"><option value="">Seleccionar...</option><option>Directo</option><option>Booking</option><option>Airbnb</option><option>WhatsApp</option><option>Teléfono</option><option>Referido</option><option>Otro</option></select>
+          </div>
+        </div>
+      </div>
+      <div class="fsec">
+        <div class="fsec-title">Fechas y Horarios</div>
+        <div class="frow">
+          <div class="fg"><label>Día (Check-in) *</label><input type="date" id="f-dia"></div>
+          <div class="fg"><label>Hora</label><input type="time" id="f-hora"></div>
+        </div>
+        <div class="frow">
+          <div class="fg"><label>Fecha de Reserva</label><input type="date" id="f-freserva"></div>
+          <div class="fg"><label>Fecha de Pago</label><input type="date" id="f-fpago"></div>
+        </div>
+      </div>
+      <div class="fsec">
+        <div class="fsec-title">Datos del Huésped</div>
+        <div class="fg"><label>Cliente *</label><input type="text" id="f-cliente" placeholder="Nombre completo"></div>
+        <div class="frow">
+          <div class="fg"><label>Correo</label><input type="email" id="f-correo" placeholder="email@ejemplo.com"></div>
+          <div class="fg"><label>Teléfono</label><input type="tel" id="f-tel" placeholder="+51 999 000 000"></div>
+        </div>
+      </div>
+      <div class="fsec">
+        <div class="fsec-title">Alojamiento y Pago</div>
+        <div class="frow">
+          <div class="fg"><label>Cuarto *</label><input type="text" id="f-cuarto" placeholder="101, Suite A..."></div>
+          <div class="fg"><label>Cap. Máx.</label><input type="number" id="f-capmax" placeholder="2" min="1"></div>
+        </div>
+        <div class="frow">
+          <div class="fg"><label>Medio de Pago</label>
+            <select id="f-pago"><option value="">Seleccionar...</option><option>Efectivo</option><option>Tarjeta Débito</option><option>Tarjeta Crédito</option><option>Transferencia</option><option>Yape</option><option>Plin</option><option>Otro</option></select>
+          </div>
+          <div class="fg"><label>Precio (S/) *</label><input type="number" id="f-precio" placeholder="0.00" min="0" step="0.01"></div>
+        </div>
+        <div class="frow">
+          <div class="fg"><label>Promociones</label><input type="text" id="f-promo"></div>
+          <div class="fg"><label>Dcto. 2 (S/)</label><input type="number" id="f-dcto2" placeholder="0.00" step="0.01"></div>
+        </div>
+        <div class="fg"><label>PCD</label><input type="text" id="f-pcd"></div>
+      </div>
+      <div class="fsec">
+        <div class="fsec-title">Extra</div>
+        <div class="fg"><label>Observaciones</label><textarea id="f-obs" placeholder="Notas especiales..."></textarea></div>
+        <div class="frow">
+          <div class="fg"><label>Columna 1</label><input type="text" id="f-c1"></div>
+          <div class="fg"><label>Columna 2</label><input type="text" id="f-c2"></div>
+        </div>
+        <div class="fg"><label>Columna 3</label><input type="text" id="f-c3"></div>
+      </div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn btn-cancel" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn btn-save" onclick="guardar()">💾 Guardar en Excel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════════
+// CONFIGURACIÓN — ya precargada
+// ════════════════════════════════════════════════════
+const CLIENT_ID  = 'f4393dd2-0bea-4169-b13a-6b3f44f2dbe5';
+const TENANT_ID  = 'ac09e89c-2ee8-4d6e-9128-4b32bb4b2224';
+const REDIRECT   = location.origin + location.pathname;
+const EXCEL_NAME = 'ESTADISTICAS EP.xlsx';
+const EXCEL_PATH = '/Archivos de Clifford De la Piedra - Asistente de Gerencia/NWO';
+const SHEET_NAME = 'RESERVAS';
+const AUTH_URL   = `https://login.microsoftonline.com/${TENANT_ID}/oauth2/v2.0/authorize`;
+const SCOPES     = 'https://graph.microsoft.com/Files.ReadWrite https://graph.microsoft.com/User.Read openid profile';
+
+// Columnas en el mismo orden del Excel original
+const HEADERS = ['Cod Rva','Dia','F. Pago','F. Reserva','Hora','Cliente','Correo','Telefono','Cuarto','MedioPago',' PRECIO ','Promociones',' Dcto2 ','PCD','Obs','Origen','Columna1','Columna2','Columna3','Cap Max','MES','AÑO'];
+const KEYS    = ['codRva','dia','fPago','fReserva','hora','cliente','correo','telefono','cuarto','medioPago','precio','promociones','dcto2','pcd','obs','origen','col1','col2','col3','capMax','mes','año'];
+
+// ════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════
+let token = null, fileId = null;
+let reservas = [], filtroActual = 'todo', busquedaActual = '';
+let calFecha = new Date(), diaSeleccionado = null;
+const HOY = new Date(), HOY_STR = HOY.toISOString().split('T')[0];
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+// ════════════════════════════════════════════════════
+// AUTH — Implicit flow (sin librería externa)
+// ════════════════════════════════════════════════════
+function iniciarLogin() {
+  // Guardar ruta actual para volver
+  sessionStorage.setItem('rva_origin', location.href);
+
+  const params = new URLSearchParams({
+    client_id:     CLIENT_ID,
+    response_type: 'token',
+    redirect_uri:  REDIRECT,
+    scope:         SCOPES,
+    response_mode: 'fragment',
+    nonce:         Math.random().toString(36).slice(2),
+    prompt:        'select_account'
+  });
+
+  location.href = AUTH_URL + '?' + params.toString();
+}
+
+function leerTokenDelHash() {
+  const hash = location.hash.substring(1);
+  if (!hash) return null;
+  const params = new URLSearchParams(hash);
+  const t = params.get('access_token');
+  if (t) {
+    // Limpiar hash de la URL sin recargar
+    history.replaceState(null, '', location.pathname);
+    return t;
+  }
+  const err = params.get('error_description') || params.get('error');
+  if (err) {
+    mostrarError('Error de autenticación: ' + decodeURIComponent(err.replace(/\+/g,' ')));
+    history.replaceState(null, '', location.pathname);
+  }
+  return null;
+}
+
+function cerrarSesion() {
+  token = null; fileId = null; reservas = [];
+  sessionStorage.clear();
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+function mostrarError(msg) {
+  const el = document.getElementById('login-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+  document.getElementById('btn-login').disabled = false;
+}
+
+// ════════════════════════════════════════════════════
+// MICROSOFT GRAPH
+// ════════════════════════════════════════════════════
+async function gFetch(url, opts = {}) {
+  const res = await fetch(url, {
+    ...opts,
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      ...(opts.headers || {})
+    }
+  });
+  return res;
+}
+
+async function conectar() {
+  setStatus('connecting', 'Buscando ESTADISTICAS EP.xlsx en OneDrive...');
+  try {
+    // Obtener info del usuario
+    const meRes = await gFetch('https://graph.microsoft.com/v1.0/me');
+    if (!meRes.ok) throw new Error('Token inválido o sin permisos');
+    const me = await meRes.json();
+    document.getElementById('user-name').textContent = me.displayName || me.userPrincipalName;
+
+    // Buscar el archivo
+    const fileRes = await gFetch(
+      `https://graph.microsoft.com/v1.0/me/drive/root:${EXCEL_PATH}/${encodeURIComponent(EXCEL_NAME)}`
+    );
+    if (!fileRes.ok) {
+      const e = await fileRes.json();
+      throw new Error(`Archivo "${EXCEL_NAME}" no encontrado. Verifica la ruta en OneDrive. (${e.error?.code})`);
+    }
+    const fileData = await fileRes.json();
+    fileId = fileData.id;
+
+    setStatus('success', '✅ Conectado a ESTADISTICAS EP.xlsx');
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    renderCal();
+    await cargarDatos();
+  } catch(err) {
+    setStatus('error', '❌ ' + err.message);
+    mostrarError(err.message);
+  }
+}
+
+// ════════════════════════════════════════════════════
+// LEER / ESCRIBIR EXCEL
+// ════════════════════════════════════════════════════
+async function cargarDatos() {
+  setSyncState('syncing', 'Leyendo Excel...');
+  try {
+    const res = await gFetch(
+      `https://graph.microsoft.com/v1.0/me/drive/items/${fileId}/workbook/worksheets('${SHEET_NAME}')/usedRange`
+    );
+    if (!res.ok) {
+      const e = await res.json();
+      throw new Error(e.error?.message || `No se encontró la hoja "${SHEET_NAME}"`);
+    }
+    const data = await res.json();
+    const values = data.values || [];
+    if (values.length < 2) {
+      reservas = [];
+      renderTabla();
+      setSyncState('ok', 'Hoja vacía — agrega la primera reserva');
+      return;
+    }
+    const hdrs = values[0];
+    reservas = values.slice(1)
+      .map((row, i) => ({ ...filaARva(hdrs, row), _excelRow: i + 2 }))
+      .filter(r => r.cliente || r.codRva);
+    renderTabla();
+    setSyncState('ok', `${reservas.length} reservas · ${new Date().toLocaleTimeString('es-PE')}`);
+  } catch(err) {
+    setSyncState('err', 'Error leyendo Excel');
+    showToast('❌ ' + err.message, 'err');
+  }
+}
+
+function filaARva(hdrs, row) {
+  const r = {};
+  KEYS.forEach((key, i) => {
+    const hdrTrim = HEADERS[i].trim();
+    const ci = hdrs.findIndex(h => h && h.toString().trim() === hdrTrim);
+    let val = ci >= 0 ? row[ci] : (row[i] ?? '');
+    if (['dia','fPago','fReserva'].includes(key) && typeof val === 'number' && val > 40000)
+      val = new Date((val - 25569) * 86400000).toISOString().split('T')[0];
+    r[key] = val ?? '';
+  });
+  return r;
+}
+
+function rvaAFila(r) {
+  const d = r.dia ? new Date(r.dia + 'T12:00:00') : new Date();
+  return KEYS.map(k => {
+    if (k === 'mes') return d.getMonth() + 1;
+    if (k === 'año') return d.getFullYear();
+    return r[k] ?? '';
+  });
+}
+
+function colLetter(n) {
+  let s = '';
+  while (n > 0) { n--; s = String.fromCharCode(65 + n % 26) + s; n = Math.floor(n / 26); }
+  return s;
+}
+
+async function escribirFila(rva, excelRow) {
+  const end = colLetter(HEADERS.length);
+  const res = await gFetch(
+    `https://graph.microsoft.com/v1.0/me/drive/items/${fileId}/workbook/worksheets('${SHEET_NAME}')/range(address='A${excelRow}:${end}${excelRow}')`,
+    { method: 'PATCH', body: JSON.stringify({ values: [rvaAFila(rva)] }) }
+  );
+  if (!res.ok) { const e = await res.json(); throw new Error(e.error?.message || 'Error guardando'); }
+}
+
+async function nuevaFila(rva) {
+  const res = await gFetch(`https://graph.microsoft.com/v1.0/me/drive/items/${fileId}/workbook/worksheets('${SHEET_NAME}')/usedRange`);
+  const data = await res.json();
+  const nextRow = (data.rowCount || 1) + 1;
+  rva._excelRow = nextRow;
+  await escribirFila(rva, nextRow);
+  return nextRow;
+}
+
+async function borrarFila(excelRow) {
+  const end = colLetter(HEADERS.length);
+  await gFetch(
+    `https://graph.microsoft.com/v1.0/me/drive/items/${fileId}/workbook/worksheets('${SHEET_NAME}')/range(address='A${excelRow}:${end}${excelRow}')`,
+    { method: 'PATCH', body: JSON.stringify({ values: [Array(HEADERS.length).fill('')] }) }
+  );
+}
+
+// ════════════════════════════════════════════════════
+// CRUD
+// ════════════════════════════════════════════════════
+function abrirModal(idx = -1) {
+  document.getElementById('edit-idx').value = idx;
+  limpiarForm();
+  if (idx >= 0) {
+    const r = reservas[idx];
+    document.getElementById('modal-title').textContent = 'Editar Reservación';
+    document.getElementById('edit-row').value = r._excelRow || -1;
+    const M = { 'f-cod':r.codRva,'f-dia':r.dia,'f-fpago':r.fPago,'f-freserva':r.fReserva,'f-hora':r.hora,'f-cliente':r.cliente,'f-correo':r.correo,'f-tel':r.telefono,'f-cuarto':r.cuarto,'f-precio':r.precio,'f-promo':r.promociones,'f-dcto2':r.dcto2,'f-pcd':r.pcd,'f-obs':r.obs,'f-capmax':r.capMax,'f-c1':r.col1,'f-c2':r.col2,'f-c3':r.col3 };
+    Object.entries(M).forEach(([id,v]) => { const el=document.getElementById(id); if(el) el.value=v||''; });
+    document.getElementById('f-pago').value  = r.medioPago || '';
+    document.getElementById('f-origen').value = r.origen || '';
+  } else {
+    document.getElementById('modal-title').textContent = 'Nueva Reservación';
+    document.getElementById('edit-row').value = -1;
+    document.getElementById('f-cod').value = 'RVA-' + String(reservas.length + 1).padStart(3,'0');
+    document.getElementById('f-freserva').value = HOY_STR;
+  }
+  document.getElementById('overlay').classList.add('open');
+}
+
+function cerrarModal() { document.getElementById('overlay').classList.remove('open'); }
+
+function limpiarForm() {
+  ['f-cod','f-dia','f-fpago','f-freserva','f-hora','f-cliente','f-correo','f-tel','f-cuarto','f-precio','f-promo','f-dcto2','f-pcd','f-obs','f-capmax','f-c1','f-c2','f-c3']
+    .forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('f-pago').value=''; document.getElementById('f-origen').value='';
+}
+
+async function guardar() {
+  const cod=document.getElementById('f-cod').value.trim(), dia=document.getElementById('f-dia').value;
+  const cliente=document.getElementById('f-cliente').value.trim(), cuarto=document.getElementById('f-cuarto').value.trim();
+  if (!cod||!dia||!cliente||!cuarto) { showToast('⚠️ Completa: Código, Día, Cliente y Cuarto','err'); return; }
+  const d = new Date(dia+'T12:00:00');
+  const rva = {
+    codRva:cod, dia, fPago:document.getElementById('f-fpago').value, fReserva:document.getElementById('f-freserva').value,
+    hora:document.getElementById('f-hora').value, cliente, correo:document.getElementById('f-correo').value,
+    telefono:document.getElementById('f-tel').value, cuarto, medioPago:document.getElementById('f-pago').value,
+    precio:document.getElementById('f-precio').value||'0', promociones:document.getElementById('f-promo').value,
+    dcto2:document.getElementById('f-dcto2').value, pcd:document.getElementById('f-pcd').value,
+    obs:document.getElementById('f-obs').value, origen:document.getElementById('f-origen').value,
+    col1:document.getElementById('f-c1').value, col2:document.getElementById('f-c2').value, col3:document.getElementById('f-c3').value,
+    capMax:document.getElementById('f-capmax').value, mes:d.getMonth()+1, año:d.getFullYear()
+  };
+  const idx=parseInt(document.getElementById('edit-idx').value);
+  const excelRow=parseInt(document.getElementById('edit-row').value);
+  cerrarModal();
+  setSyncState('syncing','Guardando en Excel...');
+  try {
+    if (idx>=0 && excelRow>0) { rva._excelRow=excelRow; await escribirFila(rva,excelRow); reservas[idx]=rva; showToast('✅ Reserva actualizada en Excel','ok'); }
+    else { await nuevaFila(rva); reservas.push(rva); showToast('✅ Reserva guardada en Excel','ok'); }
+    renderTabla();
+    setSyncState('ok','Guardado · '+new Date().toLocaleTimeString('es-PE'));
+  } catch(err) { setSyncState('err','Error guardando'); showToast('❌ '+err.message,'err'); }
+}
+
+async function eliminar(idx) {
+  const rva=reservas[idx];
+  if (!confirm(`¿Eliminar la reserva de "${rva.cliente}"?`)) return;
+  setSyncState('syncing','Eliminando...');
+  try {
+    if (rva._excelRow>0) await borrarFila(rva._excelRow);
+    reservas.splice(idx,1); renderTabla();
+    setSyncState('ok','Eliminado · '+new Date().toLocaleTimeString('es-PE'));
+    showToast('🗑️ Eliminado de Excel','ok');
+  } catch(err) { setSyncState('err','Error'); showToast('❌ '+err.message,'err'); }
+}
+
+// ════════════════════════════════════════════════════
+// RENDER
+// ════════════════════════════════════════════════════
+function renderTabla() {
+  let data=[...reservas]; const ahora=new Date();
+  if (filtroActual==='hoy') data=data.filter(r=>r.dia===HOY_STR);
+  else if (filtroActual==='mes') data=data.filter(r=>{const d=new Date(r.dia+'T12:00:00');return d.getFullYear()===ahora.getFullYear()&&d.getMonth()===ahora.getMonth();});
+  else if (filtroActual==='semana'){const lun=new Date(ahora);lun.setDate(ahora.getDate()-ahora.getDay()+1);lun.setHours(0,0,0,0);const dom=new Date(lun);dom.setDate(lun.getDate()+6);data=data.filter(r=>{const d=new Date(r.dia+'T12:00:00');return d>=lun&&d<=dom;});}
+  if (busquedaActual){const q=busquedaActual.toLowerCase();data=data.filter(r=>r.cliente?.toLowerCase().includes(q)||r.codRva?.toLowerCase().includes(q)||r.cuarto?.toLowerCase().includes(q));}
+  const tbody=document.getElementById('tbl-body'), empty=document.getElementById('empty-tbl');
+  if (!data.length){tbody.innerHTML='';empty.style.display='block';}
+  else {
+    empty.style.display='none';
+    tbody.innerHTML=data.map(r=>{
+      const idx=reservas.indexOf(r);
+      return `<tr>
+        <td><span class="cod-tag">${r.codRva||'—'}</span></td>
+        <td>${fmtF(r.dia)}</td><td>${fmtF(r.fReserva)}</td><td>${fmtF(r.fPago)}</td>
+        <td>${r.hora||'—'}</td>
+        <td><strong>${r.cliente}</strong>${r.telefono?`<br><small style="color:var(--muted)">${r.telefono}</small>`:''}</td>
+        <td>${r.cuarto}</td><td>${r.medioPago||'—'}</td>
+        <td class="price-tag">S/ ${parseFloat(r.precio||0).toFixed(2)}</td>
+        <td style="color:var(--muted);font-size:0.74rem">${r.origen||'—'}</td>
+        <td><div class="act-btns">
+          <button class="btn-sm btn-edit-sm" onclick="abrirModal(${idx})">✏️</button>
+          <button class="btn-sm btn-del-sm" onclick="eliminar(${idx})">🗑️</button>
+        </div></td>
+      </tr>`;
+    }).join('');
+  }
+  // Stats
+  const tot=reservas.length, ing=reservas.reduce((s,r)=>s+parseFloat(r.precio||0),0);
+  const mes=reservas.filter(r=>{const d=new Date(r.dia+'T12:00:00');return d.getFullYear()===ahora.getFullYear()&&d.getMonth()===ahora.getMonth();}).length;
+  const hoy=reservas.filter(r=>r.dia===HOY_STR).length;
+  document.getElementById('st-total').textContent=tot;
+  document.getElementById('st-ingresos').textContent='S/ '+ing.toLocaleString('es-PE',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('st-mes').textContent=mes;
+  document.getElementById('st-hoy').textContent=hoy;
+  renderCal();
+}
+
+function fmtF(s){if(!s)return'—';try{return new Date(s+'T12:00:00').toLocaleDateString('es-PE',{day:'2-digit',month:'short',year:'numeric'});}catch{return s;}}
+function filtrar(t,btn){filtroActual=t;document.querySelectorAll('.pill').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');renderTabla();}
+function buscar(q){busquedaActual=q;renderTabla();}
+
+// ════════════════════════════════════════════════════
+// CALENDARIO
+// ════════════════════════════════════════════════════
+function renderCal(){
+  const a=calFecha.getFullYear(),m=calFecha.getMonth();
+  document.getElementById('cal-title').textContent=MESES[m]+' '+a;
+  const primer=new Date(a,m,1).getDay(), total=new Date(a,m+1,0).getDate();
+  const conRva=new Set(reservas.filter(r=>{if(!r.dia)return false;const d=new Date(r.dia+'T12:00:00');return d.getFullYear()===a&&d.getMonth()===m;}).map(r=>new Date(r.dia+'T12:00:00').getDate()));
+  let html=['D','L','M','X','J','V','S'].map(d=>`<div class="cal-dn">${d}</div>`).join('');
+  for(let i=0;i<primer;i++)html+=`<div class="cal-d empty"></div>`;
+  for(let d=1;d<=total;d++){
+    const esH=d===HOY.getDate()&&m===HOY.getMonth()&&a===HOY.getFullYear();
+    const esSel=diaSeleccionado&&d===diaSeleccionado.d&&m===diaSeleccionado.m&&a===diaSeleccionado.a;
+    let cls='cal-d';if(esH)cls+=' today';if(esSel)cls+=' selected';if(conRva.has(d))cls+=' has-rva';
+    html+=`<div class="${cls}" onclick="selDia(${d},${m},${a})">${d}</div>`;
+  }
+  document.getElementById('cal-grid').innerHTML=html;
+}
+
+function cambiarMes(dir){calFecha=new Date(calFecha.getFullYear(),calFecha.getMonth()+dir,1);diaSeleccionado=null;renderCal();document.getElementById('dia-section').style.display='none';}
+
+function selDia(d,m,a){
+  diaSeleccionado={d,m,a}; renderCal();
+  const str=`${a}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  const del=reservas.filter(r=>r.dia===str);
+  document.getElementById('dia-section').style.display='block';
+  document.getElementById('dia-title').textContent=`${d} ${MESES[m]} · ${del.length} reserva${del.length!==1?'s':''}`;
+  document.getElementById('dia-list').innerHTML=!del.length
+    ?`<p style="font-size:0.78rem;color:var(--muted);padding:8px 0">Sin reservas este día.</p>`
+    :del.map(r=>`<div class="day-card" onclick="abrirModal(${reservas.indexOf(r)})"><div class="dc-name">${r.cliente}</div><div class="dc-meta">${r.cuarto} · ${r.hora||'—'}</div><div class="dc-price">S/ ${parseFloat(r.precio||0).toFixed(2)}</div></div>`).join('');
+}
+
+// ════════════════════════════════════════════════════
+// UTILS
+// ════════════════════════════════════════════════════
+function setStatus(type,text){
+  const bar=document.getElementById('status-bar');bar.className=type;
+  document.getElementById('sb-text').textContent=text;
+  document.getElementById('sb-spinner').style.display=type==='connecting'?'block':'none';
+  if(type!=='connecting')setTimeout(()=>bar.className='',5000);
+}
+function setSyncState(state,label){
+  const b=document.getElementById('sync-badge');
+  b.className='sync-badge'+(state==='syncing'?' syncing':state==='err'?' err':'');
+  document.getElementById('sync-label').textContent=label;
+}
+function showToast(msg,type=''){
+  const t=document.getElementById('toast');t.textContent=msg;
+  t.className='toast show'+(type?' '+type:'');
+  setTimeout(()=>t.className='toast',3800);
+}
+
+document.getElementById('overlay').addEventListener('click',e=>{if(e.target===document.getElementById('overlay'))cerrarModal();});
+
+// ════════════════════════════════════════════════════
+// BOOT — detectar si venimos del redirect de Microsoft
+// ════════════════════════════════════════════════════
+(function boot() {
+  const t = leerTokenDelHash();
+  if (t) {
+    token = t;
+    conectar();
+  }
+  // Si no hay hash, mostrar pantalla de login normal
+})();
+</script>
+</body>
+</html>
